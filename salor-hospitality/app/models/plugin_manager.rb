@@ -15,13 +15,13 @@ class PluginManager < AbstractController::Base
   include AbstractController::AssetPaths
   include Rails.application.routes.url_helpers
   include Base
-  
+
   helper ApplicationHelper
-  
+
   self.view_paths = "app/views/"
-  
+
   attr_accessor :javascript_files, :stylesheet_files, :template_files, :image_files, :metas, :logger
-  
+
   def initialize(vendor, user, params, request)
     @user                   = user
     @vendor                 = vendor
@@ -32,14 +32,14 @@ class PluginManager < AbstractController::Base
     @context['Request']     = request
     #@context['PLUGINS_BASE_URL']         = @group.urls[:plugins]
     @code = nil
-    
+
     @javascript_files = {}
     @stylesheet_files = {}
     @template_files = {}
     @image_files = {}
-    
+
     @metas = {}
-    
+
     # Filters are organized by name, which will be an
     # array of filters which will be sorted by their priority
     # { :some_filter => [
@@ -47,17 +47,17 @@ class PluginManager < AbstractController::Base
     #   ]
     # }
     @filters                = {}
-    
+
     @actions                = {}
-    
+
     @text = "(function() {\nvar plugins = {};\n"
     @plugins.existing.each do |plugin|
       log_action "PluginManager initializing #{ plugin.name }"
-      
+
       _files = plugin.files
       plugin_file_name = nil
       @metas[plugin.name] = plugin.meta
-      
+
       _files.each do |f|
         if f.match(/\.pl\.js$/) then
           plugin_file_name = File.join(plugin.full_path,f)
@@ -75,7 +75,7 @@ class PluginManager < AbstractController::Base
           @template_files[plugin.name] << f
         end
       end
-      
+
       if plugin_file_name and File.exists? plugin_file_name
         log_action("Opening plugin file " + plugin_file_name)
         File.open(plugin_file_name,'r') do |f|
@@ -85,44 +85,44 @@ class PluginManager < AbstractController::Base
       end
     end
     @text += "\n return plugins; \n})();\n"
-    
+
     begin
       @code = @context.eval(@text)
     rescue => e
       raise "Code failed to evaluate: #{ e.inspect } #{ @text }"
-      
+
       #log_action e.inspect
     end
   end
-  
+
   def log_action_plugin(obj="",color=:grey_on_blue)
     from = self.class.to_s
     Base.log_action(from, "PLUGIN: #{ v8_object_to_hash(obj) }", color)
   end
-  
+
   def log_action(txt="",color=:green)
     from = self.class.to_s
     Base.log_action(from, txt, color)
   end
-  
+
   # requires present "metafields" function in the plugin file
   def get_meta_fields_for(plugin)
     fields = {}
     fields = apply_filter("metafields_" + plugin.name, fields)
     return fields
   end
-  
-  def debug_obj(obj) 
+
+  def debug_obj(obj)
     obj.each do |k,v|
       puts k.inspect
-      log_action "#{k} -> #{v}"   
+      log_action "#{k} -> #{v}"
     end
   end
-  
+
   def priority_sort(arr)
     return arr.sort {|a,b|  b[:priority] <=> a[:priority]}
   end
-  
+
   def add_filter(name,function, priority=0)
     @filters[name.to_sym] ||= []
     @filters[name.to_sym].push({:function => function, :priority => priority})
@@ -159,7 +159,7 @@ class PluginManager < AbstractController::Base
   # and then it is returned to you.
   def apply_filter(name, res, params=nil)
     log_action("Applying filter: " + name)
-    
+
     if not @code
       log_action("No code, returning")
       return res
@@ -171,15 +171,15 @@ class PluginManager < AbstractController::Base
       @filters[name.to_sym].each do |callback|
         begin
           function_name = callback[:function]
-          
+
           function = get_function_from(@code,function_name)
-          
+
           if not function then
             log_action "function #{callback[:function]} is not set."
           else
             res = function.methodcall(function, res, params)
           end
-          
+
          rescue => e
            log_action("There was an error in the ACTION " + name + ": " + e.inspect)
            log_action e.backtrace.join("\n")
@@ -191,9 +191,9 @@ class PluginManager < AbstractController::Base
            msg << annotated_js.join("\n")
            return "<pre>#{ msg.join("\n") }</pre>"
         end
-      end 
+      end
     end
-    
+
     if cvrt == Array then
       narg = []
       res.each do |el|
@@ -206,12 +206,12 @@ class PluginManager < AbstractController::Base
     elsif cvrt == Hash then
       res = v8_object_to_hash(res)
     end
-    
+
     log_action("Filter #{name} done.")
     return res
   end
 
-  
+
   def do_action(name, arg=nil)
     name = name.to_s
     log_action("Beginning ACTION " + name)
@@ -222,7 +222,7 @@ class PluginManager < AbstractController::Base
         log_action("Executing ACTION " + name)
         function_name = callback[:function]
         function = get_function_from(@code,function_name)
-        
+
         if not function then
           log_action "function #{callback[:function]} is not set."
         else
@@ -248,7 +248,7 @@ class PluginManager < AbstractController::Base
             content += tmp
           end
         end
-      end 
+      end
     else
       log_action("There are no ACTIONs")
     end
@@ -278,11 +278,11 @@ class PluginManager < AbstractController::Base
       return src_attrs
     end
   end
-  
+
   def get_meta(plugin_name, attr)
     return @metas[plugin_name][attr]
   end
-  
+
   def request_localhost(method, path, port, data={}, headers={}, user=nil, pass=nil)
     headers = self.v8_object_to_hash(headers)
     url = "http://localhost:#{ port }#{ path }"
@@ -297,7 +297,7 @@ class PluginManager < AbstractController::Base
     elsif method == "get"
       request = Net::HTTP::Get.new(uri.request_uri)
     end
-    
+
     if user and pass then
       log_action "get_url: setting basic authentication"
       request.basic_auth(user,pass)

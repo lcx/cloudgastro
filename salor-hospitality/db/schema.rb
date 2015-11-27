@@ -11,19 +11,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20150624110801) do
+ActiveRecord::Schema.define(version: 20150908065754) do
+
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
 
   create_table "articles", force: true do |t|
     t.string   "name"
     t.string   "description"
     t.text     "recipe"
     t.integer  "category_id"
-    t.float    "price",                 limit: 24
-    t.boolean  "active",                           default: true
+    t.float    "price"
+    t.boolean  "active",                default: true
     t.boolean  "waiterpad"
-    t.datetime "created_at",                                       null: false
-    t.datetime "updated_at",                                       null: false
-    t.boolean  "hidden",                           default: false
+    t.datetime "created_at",                            null: false
+    t.datetime "updated_at",                            null: false
+    t.boolean  "hidden",                default: false
     t.integer  "sort"
     t.integer  "position"
     t.integer  "company_id"
@@ -33,6 +36,7 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.integer  "hidden_by"
     t.datetime "hidden_at"
     t.string   "sku"
+    t.integer  "item_type_id"
   end
 
   add_index "articles", ["category_id"], name: "index_articles_on_category_id", using: :btree
@@ -54,13 +58,13 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.integer  "vendor_id"
     t.integer  "company_id"
     t.integer  "guest_type_id"
-    t.float    "sum",             limit: 24,    default: 0.0
+    t.float    "sum",                           default: 0.0
     t.datetime "created_at",                                         null: false
     t.datetime "updated_at",                                         null: false
     t.integer  "count",                         default: 1
     t.integer  "hidden_by"
-    t.float    "base_price",      limit: 24
-    t.float    "refund_sum",      limit: 24,    default: 0.0
+    t.float    "base_price"
+    t.float    "refund_sum",                    default: 0.0
     t.string   "taxes",           limit: 10000, default: "--- {}\n"
     t.datetime "from_date"
     t.datetime "to_date"
@@ -69,10 +73,10 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.integer  "booking_item_id"
     t.string   "ui_parent_id"
     t.string   "ui_id"
-    t.float    "unit_sum",        limit: 24
+    t.float    "unit_sum"
     t.integer  "room_id"
     t.boolean  "date_locked",                   default: false
-    t.float    "tax_sum",         limit: 24
+    t.float    "tax_sum"
     t.datetime "hidden_at"
   end
 
@@ -91,7 +95,7 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.datetime "from_date"
     t.datetime "to_date"
     t.integer  "customer_id"
-    t.float    "sum",              limit: 24,    default: 0.0
+    t.float    "sum",                            default: 0.0
     t.boolean  "hidden"
     t.boolean  "paid",                           default: false
     t.text     "note"
@@ -103,15 +107,15 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.boolean  "finished",                       default: false
     t.integer  "user_id"
     t.integer  "hidden_by"
-    t.float    "refund_sum",       limit: 24,    default: 0.0
+    t.float    "refund_sum",                     default: 0.0
     t.integer  "nr"
-    t.float    "change_given",     limit: 24
-    t.float    "duration",         limit: 24
+    t.float    "change_given"
+    t.float    "duration"
     t.string   "taxes",            limit: 10000, default: "--- {}\n"
-    t.float    "booking_item_sum", limit: 24
+    t.float    "booking_item_sum"
     t.datetime "finished_at"
     t.datetime "paid_at"
-    t.float    "tax_sum",          limit: 24
+    t.float    "tax_sum"
     t.datetime "hidden_at"
   end
 
@@ -191,14 +195,23 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
 
   create_table "companies", force: true do |t|
     t.string   "name"
-    t.string   "mode",       default: "local"
+    t.string   "mode",               default: "local"
     t.string   "subdomain"
-    t.boolean  "hidden",     default: false
-    t.boolean  "active",     default: true
+    t.boolean  "hidden",             default: false
+    t.boolean  "active",             default: true
     t.string   "email"
     t.integer  "hidden_by"
     t.datetime "hidden_at"
     t.string   "identifier"
+    t.string   "auth_user"
+    t.string   "full_subdomain"
+    t.string   "full_url"
+    t.string   "virtualhost_filter"
+    t.integer  "auth_https_mode"
+    t.boolean  "https"
+    t.boolean  "auth"
+    t.string   "domain"
+    t.boolean  "removal_pending"
   end
 
   create_table "cost_centers", force: true do |t|
@@ -218,17 +231,17 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
 
   create_table "coupons", force: true do |t|
     t.string   "name"
-    t.float    "amount",              limit: 24, default: 0.0
+    t.float    "amount",              default: 0.0
     t.integer  "ctype"
     t.string   "sku"
     t.datetime "start_date"
     t.datetime "end_date"
-    t.boolean  "more_than_1_allowed",            default: true
+    t.boolean  "more_than_1_allowed", default: true
     t.integer  "article_id"
-    t.boolean  "time_based",                     default: false
+    t.boolean  "time_based",          default: false
     t.integer  "company_id"
-    t.datetime "created_at",                                     null: false
-    t.datetime "updated_at",                                     null: false
+    t.datetime "created_at",                          null: false
+    t.datetime "updated_at",                          null: false
     t.integer  "vendor_id"
     t.boolean  "hidden"
     t.integer  "hidden_by"
@@ -278,12 +291,15 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.integer  "hidden_by"
     t.datetime "hidden_at"
     t.boolean  "logged_in"
+    t.string   "password_encrypted"
+    t.string   "password_salt"
+    t.string   "id_hash"
     t.string   "tax_info"
   end
 
   create_table "discounts", force: true do |t|
     t.string   "name"
-    t.float    "amount",      limit: 24
+    t.float    "amount"
     t.integer  "dtype"
     t.integer  "category_id"
     t.integer  "company_id"
@@ -291,11 +307,11 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.boolean  "time_based"
     t.integer  "start_time"
     t.integer  "end_time"
-    t.datetime "created_at",                            null: false
-    t.datetime "updated_at",                            null: false
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
     t.integer  "vendor_id"
     t.boolean  "hidden"
-    t.boolean  "active",                 default: true
+    t.boolean  "active",      default: true
     t.integer  "hidden_by"
     t.datetime "hidden_at"
   end
@@ -382,11 +398,11 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   add_index "images", ["imageable_id", "imageable_type"], name: "index_images_on_imageable_id_and_imageable_type", using: :btree
 
   create_table "ingredients", force: true do |t|
-    t.float    "amount",     limit: 24
+    t.float    "amount"
     t.integer  "article_id"
     t.integer  "stock_id"
-    t.datetime "created_at",            null: false
-    t.datetime "updated_at",            null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.integer  "company_id"
     t.integer  "vendor_id"
     t.boolean  "hidden"
@@ -397,6 +413,18 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   add_index "ingredients", ["article_id"], name: "index_ingredients_on_article_id", using: :btree
   add_index "ingredients", ["stock_id"], name: "index_ingredients_on_stock_id", using: :btree
 
+  create_table "item_types", force: true do |t|
+    t.string   "name"
+    t.string   "behavior"
+    t.integer  "vendor_id"
+    t.integer  "company_id"
+    t.boolean  "hidden"
+    t.datetime "hidden_at"
+    t.integer  "hidden_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
   create_table "items", force: true do |t|
     t.integer  "count",                               default: 1
     t.integer  "article_id"
@@ -406,8 +434,8 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.integer  "position"
     t.integer  "quantity_id"
     t.string   "comment",                             default: ""
-    t.float    "price",                 limit: 24
-    t.integer  "printed_count",         limit: 1,     default: 0
+    t.float    "price"
+    t.integer  "printed_count",         limit: 2,     default: 0
     t.integer  "item_id"
     t.integer  "max_count",                           default: 0
     t.integer  "company_id"
@@ -421,12 +449,12 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.string   "delivery_comment",                    default: ""
     t.boolean  "hidden"
     t.integer  "category_id"
-    t.float    "tax_percent",           limit: 24
-    t.float    "tax_sum",               limit: 24
-    t.float    "sum",                   limit: 24
+    t.float    "tax_percent"
+    t.float    "tax_sum"
+    t.float    "sum"
     t.integer  "hidden_by"
     t.boolean  "refunded"
-    t.float    "refund_sum",            limit: 24
+    t.float    "refund_sum"
     t.integer  "refunded_by"
     t.integer  "settlement_id"
     t.integer  "cost_center_id"
@@ -440,6 +468,7 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.boolean  "price_changed"
     t.integer  "price_changed_by"
     t.integer  "position_category"
+    t.integer  "item_type_id"
   end
 
   add_index "items", ["article_id"], name: "index_items_on_article_id", using: :btree
@@ -469,12 +498,12 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.integer  "company_id"
     t.boolean  "hidden"
     t.integer  "hidden_by"
-    t.float    "price",           limit: 24
+    t.float    "price"
     t.string   "name"
     t.integer  "count"
-    t.float    "sum",             limit: 24
-    t.datetime "created_at",                 null: false
-    t.datetime "updated_at",                 null: false
+    t.float    "sum"
+    t.datetime "created_at",      null: false
+    t.datetime "updated_at",      null: false
     t.boolean  "no_ticket"
     t.boolean  "separate_ticket"
     t.datetime "hidden_at"
@@ -490,14 +519,14 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   create_table "options", force: true do |t|
     t.integer  "option_id"
     t.string   "name"
-    t.float    "price",           limit: 24, default: 0.0
-    t.datetime "created_at",                                 null: false
-    t.datetime "updated_at",                                 null: false
-    t.boolean  "hidden",                     default: false
+    t.float    "price",           default: 0.0
+    t.datetime "created_at",                      null: false
+    t.datetime "updated_at",                      null: false
+    t.boolean  "hidden",          default: false
     t.integer  "position"
     t.integer  "company_id"
     t.integer  "vendor_id"
-    t.boolean  "active",                     default: true
+    t.boolean  "active",          default: true
     t.boolean  "separate_ticket"
     t.boolean  "no_ticket"
     t.integer  "hidden_by"
@@ -518,24 +547,24 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.integer  "settlement_id"
     t.datetime "created_at",                                         null: false
     t.datetime "updated_at",                                         null: false
-    t.float    "sum",             limit: 24,    default: 0.0
+    t.float    "sum",                           default: 0.0
     t.integer  "order_id"
     t.integer  "cost_center_id"
     t.string   "printed_from"
     t.integer  "nr"
     t.integer  "tax_id"
-    t.float    "refund_sum",      limit: 24,    default: 0.0
+    t.float    "refund_sum",                    default: 0.0
     t.integer  "company_id"
     t.string   "note"
     t.integer  "customer_id"
     t.integer  "m_points"
     t.integer  "vendor_id"
     t.boolean  "hidden"
-    t.float    "tax_sum",         limit: 24
+    t.float    "tax_sum"
     t.integer  "hidden_by"
     t.boolean  "printed"
     t.boolean  "paid",                          default: false
-    t.float    "change_given",    limit: 24
+    t.float    "change_given"
     t.integer  "booking_id"
     t.string   "taxes",           limit: 10000, default: "--- {}\n"
     t.datetime "finished_at"
@@ -610,37 +639,53 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   create_table "payment_method_items", force: true do |t|
     t.integer  "payment_method_id"
     t.integer  "order_id"
-    t.float    "amount",            limit: 24
+    t.float    "amount"
     t.integer  "company_id"
     t.integer  "vendor_id"
-    t.datetime "created_at",                                   null: false
-    t.datetime "updated_at",                                   null: false
+    t.datetime "created_at",                        null: false
+    t.datetime "updated_at",                        null: false
     t.integer  "booking_id"
     t.boolean  "refunded"
-    t.boolean  "cash",                         default: false
+    t.boolean  "cash",              default: false
     t.integer  "refund_item_id"
     t.integer  "settlement_id"
     t.boolean  "hidden"
     t.integer  "hidden_by"
     t.integer  "cost_center_id"
-    t.boolean  "change",                       default: false
+    t.boolean  "change",            default: false
     t.datetime "hidden_at"
     t.integer  "user_id"
   end
 
   create_table "payment_methods", force: true do |t|
     t.string   "name"
-    t.float    "amount",     limit: 24
+    t.float    "amount"
     t.integer  "order_id"
-    t.datetime "created_at",                            null: false
-    t.datetime "updated_at",                            null: false
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
     t.boolean  "hidden"
     t.integer  "company_id"
     t.integer  "vendor_id"
-    t.boolean  "cash",                  default: false
-    t.boolean  "change",                default: false
+    t.boolean  "cash",       default: false
+    t.boolean  "change",     default: false
     t.integer  "hidden_by"
     t.datetime "hidden_at"
+  end
+
+  create_table "plugins", force: true do |t|
+    t.string   "name"
+    t.string   "filename"
+    t.string   "base_path"
+    t.text     "files"
+    t.text     "meta"
+    t.integer  "company_id"
+    t.integer  "vendor_id"
+    t.integer  "user_id"
+    t.boolean  "hidden"
+    t.integer  "hidden_by"
+    t.datetime "hidden_at"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "presentations", force: true do |t|
@@ -663,14 +708,14 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   add_index "presentations", ["name"], name: "index_presentations_on_name", using: :btree
 
   create_table "quantities", force: true do |t|
-    t.string   "prefix",                           default: ""
-    t.float    "price",                 limit: 24
+    t.string   "prefix",                default: ""
+    t.float    "price"
     t.integer  "article_id"
-    t.datetime "created_at",                                       null: false
-    t.datetime "updated_at",                                       null: false
-    t.boolean  "active",                           default: true
-    t.boolean  "hidden",                           default: false
-    t.string   "postfix",                          default: ""
+    t.datetime "created_at",                            null: false
+    t.datetime "updated_at",                            null: false
+    t.boolean  "active",                default: true
+    t.boolean  "hidden",                default: false
+    t.string   "postfix",               default: ""
     t.integer  "sort"
     t.integer  "position"
     t.integer  "company_id"
@@ -753,14 +798,14 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   create_table "room_prices", force: true do |t|
     t.integer  "room_type_id"
     t.integer  "guest_type_id"
-    t.float    "base_price",    limit: 24
+    t.float    "base_price"
     t.boolean  "hidden"
     t.string   "vendor_id"
     t.string   "integer"
     t.integer  "company_id"
-    t.boolean  "active",                   default: true
-    t.datetime "created_at",                              null: false
-    t.datetime "updated_at",                              null: false
+    t.boolean  "active",        default: true
+    t.datetime "created_at",                   null: false
+    t.datetime "updated_at",                   null: false
     t.integer  "season_id"
     t.integer  "hidden_by"
     t.datetime "hidden_at"
@@ -818,15 +863,15 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   end
 
   create_table "settlements", force: true do |t|
-    t.float    "revenue",          limit: 24
+    t.float    "revenue"
     t.integer  "user_id"
-    t.datetime "created_at",                  null: false
-    t.datetime "updated_at",                  null: false
+    t.datetime "created_at",       null: false
+    t.datetime "updated_at",       null: false
     t.boolean  "finished"
-    t.float    "initial_cash",     limit: 24
+    t.float    "initial_cash"
     t.integer  "company_id"
     t.integer  "vendor_id"
-    t.float    "sum",              limit: 24
+    t.float    "sum"
     t.boolean  "hidden"
     t.integer  "hidden_by"
     t.integer  "nr"
@@ -852,12 +897,12 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   end
 
   create_table "stocks", force: true do |t|
-    t.float    "balance",    limit: 24
+    t.float    "balance"
     t.string   "unit"
     t.string   "name"
     t.integer  "group_id"
-    t.datetime "created_at",            null: false
-    t.datetime "updated_at",            null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.integer  "company_id"
     t.integer  "vendor_id"
     t.boolean  "hidden"
@@ -871,20 +916,20 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   create_table "surcharge_items", force: true do |t|
     t.integer  "surcharge_id"
     t.integer  "booking_item_id"
-    t.float    "amount",          limit: 24
+    t.float    "amount"
     t.integer  "vendor_id"
     t.integer  "company_id"
     t.integer  "season_id"
     t.integer  "guest_type_id"
     t.boolean  "hidden"
     t.string   "taxes",           limit: 1000, default: "--- {}\n"
-    t.float    "sum",             limit: 24
+    t.float    "sum"
     t.integer  "duration"
     t.integer  "count"
     t.datetime "from_date"
     t.datetime "to_date"
     t.integer  "hidden_by"
-    t.float    "tax_sum",         limit: 24
+    t.float    "tax_sum"
     t.integer  "booking_id"
     t.datetime "hidden_at"
     t.datetime "created_at"
@@ -904,16 +949,16 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.string   "name"
     t.integer  "season_id"
     t.integer  "guest_type_id"
-    t.float    "amount",        limit: 24, default: 0.0
+    t.float    "amount",        default: 0.0
     t.boolean  "hidden"
     t.integer  "vendor_id"
     t.integer  "company_id"
-    t.boolean  "active",                   default: true
-    t.datetime "created_at",                               null: false
-    t.datetime "updated_at",                               null: false
+    t.boolean  "active",        default: true
+    t.datetime "created_at",                    null: false
+    t.datetime "updated_at",                    null: false
     t.boolean  "radio_select"
-    t.boolean  "visible",                  default: true
-    t.boolean  "selected",                 default: false
+    t.boolean  "visible",       default: true
+    t.boolean  "selected",      default: false
     t.integer  "hidden_by"
     t.datetime "hidden_at"
   end
@@ -971,7 +1016,7 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   create_table "tax_amounts", force: true do |t|
     t.integer  "surcharge_id"
     t.integer  "tax_id"
-    t.float    "amount",       limit: 24
+    t.float    "amount"
     t.integer  "vendor_id"
     t.boolean  "hidden"
     t.integer  "company_id"
@@ -986,13 +1031,13 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.integer  "order_id"
     t.integer  "booking_id"
     t.integer  "settlement_id"
-    t.float    "gro",                   limit: 24
-    t.float    "net",                   limit: 24
-    t.float    "tax",                   limit: 24
+    t.float    "gro"
+    t.float    "net"
+    t.float    "tax"
     t.integer  "company_id"
     t.integer  "vendor_id"
-    t.datetime "created_at",                       null: false
-    t.datetime "updated_at",                       null: false
+    t.datetime "created_at",            null: false
+    t.datetime "updated_at",            null: false
     t.string   "letter"
     t.integer  "surcharge_item_id"
     t.string   "name"
@@ -1019,19 +1064,20 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   add_index "tax_items", ["vendor_id"], name: "index_tax_items_on_vendor_id", using: :btree
 
   create_table "taxes", force: true do |t|
-    t.float    "percent",                limit: 24
+    t.float    "percent"
     t.string   "name"
-    t.datetime "created_at",                                        null: false
-    t.datetime "updated_at",                                        null: false
+    t.datetime "created_at",                             null: false
+    t.datetime "updated_at",                             null: false
     t.string   "letter"
     t.string   "color"
     t.boolean  "hidden"
     t.integer  "company_id"
     t.integer  "vendor_id"
-    t.boolean  "statistics_by_category",            default: false
-    t.boolean  "include_in_statistics",             default: false
+    t.boolean  "statistics_by_category", default: false
+    t.boolean  "include_in_statistics",  default: false
     t.integer  "hidden_by"
     t.datetime "hidden_at"
+    t.string   "tpe"
   end
 
   add_index "taxes", ["company_id"], name: "index_taxes_company_id", using: :btree
@@ -1043,14 +1089,14 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.datetime "login"
     t.datetime "logout"
     t.integer  "duration"
-    t.float    "hourly_rate",    limit: 24
+    t.float    "hourly_rate"
     t.boolean  "hidden"
     t.integer  "hidden_by"
     t.datetime "hidden_at"
     t.string   "ip"
     t.boolean  "auto_logout"
-    t.datetime "created_at",                null: false
-    t.datetime "updated_at",                null: false
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
     t.integer  "log_by_user_id"
   end
 
@@ -1075,17 +1121,17 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.string   "login"
     t.string   "password"
     t.string   "title"
-    t.datetime "created_at",                                            null: false
-    t.datetime "updated_at",                                            null: false
+    t.datetime "created_at",                                 null: false
+    t.datetime "updated_at",                                 null: false
     t.integer  "role_id"
     t.string   "color"
     t.string   "language"
-    t.boolean  "active",                               default: true
-    t.boolean  "hidden",                               default: false
+    t.boolean  "active",                    default: true
+    t.boolean  "hidden",                    default: false
     t.integer  "company_id"
-    t.integer  "screenlock_timeout",                   default: -1
+    t.integer  "screenlock_timeout",        default: -1
     t.boolean  "automatic_printing"
-    t.boolean  "onscreen_keyboard_enabled",            default: true
+    t.boolean  "onscreen_keyboard_enabled", default: true
     t.string   "current_ip"
     t.datetime "last_active_at"
     t.datetime "last_login_at"
@@ -1098,12 +1144,14 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.datetime "hidden_at"
     t.integer  "default_vendor_id"
     t.string   "advertising_url"
-    t.integer  "advertising_timeout",                  default: -1
-    t.float    "hourly_rate",               limit: 24
-    t.integer  "maximum_shift_duration",               default: 9999
+    t.integer  "advertising_timeout",       default: -1
+    t.string   "salt"
+    t.string   "encrypted_password"
+    t.float    "hourly_rate"
+    t.integer  "maximum_shift_duration",    default: 9999
     t.integer  "current_settlement_id"
     t.boolean  "track_time"
-    t.string   "layout",                               default: "auto"
+    t.string   "layout",                    default: "auto"
   end
 
   add_index "users", ["company_id"], name: "index_users_on_company_id", using: :btree
@@ -1139,33 +1187,28 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
   add_index "vendor_printers", ["company_id"], name: "index_vendor_printers_on_company_id", using: :btree
 
   create_table "vendors", force: true do |t|
-    t.string   "name",                                         default: "Bill Gastro"
-    t.datetime "created_at",                                                           null: false
-    t.datetime "updated_at",                                                           null: false
-    t.integer  "largest_order_number",                         default: 0
-    t.string   "unused_order_numbers",        limit: 1000,     default: "--- []\n"
+    t.string   "name",                                     default: "Bill Gastro"
+    t.datetime "created_at",                                                       null: false
+    t.datetime "updated_at",                                                       null: false
+    t.integer  "largest_invoice_number",                   default: 0
     t.string   "country"
-    t.integer  "time_offset",                                  default: 0
-    t.text     "resources_cache",             limit: 16777215
+    t.integer  "time_offset",                              default: 0
+    t.text     "resources_cache"
     t.string   "res_fetch_url"
     t.string   "res_confirm_url"
-    t.boolean  "use_order_numbers",                            default: true
     t.integer  "company_id"
-    t.boolean  "active",                                       default: true
+    t.boolean  "active",                                   default: true
     t.boolean  "hidden"
     t.binary   "rlogo_header"
     t.binary   "rlogo_footer"
-    t.boolean  "ticket_item_separator",                        default: true
-    t.boolean  "ticket_wide_font",                             default: true
-    t.boolean  "ticket_tall_font",                             default: true
-    t.boolean  "ticket_display_time_order",                    default: true
+    t.boolean  "ticket_item_separator",                    default: true
+    t.boolean  "ticket_wide_font",                         default: true
+    t.boolean  "ticket_tall_font",                         default: true
+    t.boolean  "ticket_display_time_order",                default: true
     t.text     "receipt_header_blurb"
     t.text     "receipt_footer_blurb"
     t.text     "invoice_header_blurb"
     t.text     "invoice_footer_blurb"
-    t.string   "unused_booking_numbers",      limit: 10000,    default: "--- []\n"
-    t.integer  "largest_booking_number",                       default: 0
-    t.boolean  "use_booking_numbers",                          default: true
     t.integer  "max_tables"
     t.integer  "max_rooms"
     t.integer  "max_articles"
@@ -1174,24 +1217,29 @@ ActiveRecord::Schema.define(:version => 20150624110801) do
     t.integer  "max_categories"
     t.string   "email"
     t.boolean  "remote_orders"
-    t.integer  "update_tables_interval",                       default: 19
-    t.integer  "update_item_lists_interval",                   default: 31
-    t.integer  "update_resources_interval",                    default: 127
-    t.integer  "automatic_printing_interval",                  default: 31
+    t.integer  "update_tables_interval",                   default: 19
+    t.integer  "update_item_lists_interval",               default: 31
+    t.integer  "update_resources_interval",                default: 127
+    t.integer  "automatic_printing_interval",              default: 31
     t.string   "hash_id"
-    t.integer  "largest_settlement_number",                    default: 0
-    t.string   "unused_settlement_numbers",   limit: 1000,     default: "--- []\n"
-    t.boolean  "use_settlement_numbers",                       default: true
-    t.boolean  "enable_technician_emails",                     default: false
+    t.integer  "largest_settlement_number",                default: 0
+    t.boolean  "enable_technician_emails",                 default: false
     t.string   "technician_email"
     t.integer  "hidden_by"
     t.datetime "hidden_at"
     t.boolean  "history_print"
-    t.string   "branding",                    limit: 5000,     default: "--- {}\n"
+    t.string   "branding",                    limit: 5000, default: "--- {}\n"
+    t.string   "full_subdomain"
     t.string   "identifier"
-    t.integer  "ticket_space_top",                             default: 5
+    t.string   "full_url"
+    t.string   "virtualhost_filter"
+    t.integer  "auth_https_mode"
+    t.boolean  "https"
+    t.boolean  "auth"
+    t.string   "domain"
+    t.string   "subdomain"
+    t.integer  "ticket_space_top",                         default: 5
     t.text     "public_holidays"
-    t.boolean  "one_ticket_per_piece"
     t.boolean  "print_count_reductions"
   end
 
