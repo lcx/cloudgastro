@@ -9,7 +9,7 @@
 class Season < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :vendor
   belongs_to :company
   has_many :surcharges
@@ -22,7 +22,7 @@ class Season < ActiveRecord::Base
 
   def self.current(vendor)
     now = Time.now
-    current_season = Season.where("(MONTH(from_date)<#{now.month} OR (MONTH(from_date) = #{now.month} AND DAY(from_date) <= #{now.day})) AND (MONTH(to_date) > #{now.month} OR (MONTH(to_date) = #{now.month} AND DAY(to_date) > #{now.day})) AND vendor_id = #{vendor.id}").order('duration ASC').first
+    current_season = Season.where("from_date < ?",now).where("to_date > ?",now).where(vendor_id:vendor.id).order('duration ASC').first
   end
 
   def from_date=(from)
