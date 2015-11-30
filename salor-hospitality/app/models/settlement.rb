@@ -12,7 +12,7 @@ class Settlement < ActiveRecord::Base
   include ActionView::Helpers::NumberHelper
   include Scope
   include Base
-  
+
   belongs_to :company
   belongs_to :vendor
   belongs_to :user
@@ -24,21 +24,21 @@ class Settlement < ActiveRecord::Base
 
   def finish
     orders = Order.where(:vendor_id => self.vendor_id, :company_id => self.company_id, :settlement_id => nil, :user_id => self.user_id, :finished => true)
-    
+
     order_ids = orders.collect {|o| o.id}
-    
+
     orders.update_all(:settlement_id => self.id)
-    
+
     Item.where(:vendor_id => self.vendor_id, :company_id => self.company_id, :settlement_id => nil, :order_id => order_ids).update_all(:settlement_id => self.id)
-    
+
     TaxItem.where(:vendor_id => self.vendor_id, :company_id => self.company_id, :settlement_id => nil, :order_id => order_ids).update_all(:settlement_id => self.id)
-    
+
     PaymentMethodItem.where(:vendor_id => self.vendor_id, :company_id => self.company_id, :settlement_id => nil, :order_id => order_ids).update_all(:settlement_id => self.id)
-    
+
     self.finished = true
     self.calculate_totals
   end
-  
+
   def calculate_totals
     self.sum = Order.existing.where(:settlement_id => self.id).sum(:sum).round(2)
     self.save
@@ -55,14 +55,14 @@ class Settlement < ActiveRecord::Base
   def print
     vendor_printer = self.vendor.vendor_printers.existing.first
     return if vendor_printer.nil?
-    
+
     output = self.escpos
-    
+
     printr = Escper::Printer.new(self.company.mode, vendor_printer, File.join(SalorHospitality::Application::SH_DEBIAN_SITEID, self.vendor.hash_id))
     printr.open
     bytes_written, content_sent = printr.print vendor_printer.id, output
     printr.close
-    
+
     # Push notification
     if SalorHospitality.tailor
       printerstring = sprintf("%04i", vendor_printer.id)
@@ -72,9 +72,9 @@ class Settlement < ActiveRecord::Base
         ActiveRecord::Base.logger.info "[TAILOR] Exception #{ e } during printing."
       end
     end
-    
+
     bytes_sent = content_sent.length
-    
+
     if SalorHospitality::Application::CONFIGURATION[:receipt_history] == true
       Receipt.create :vendor_id => self.vendor_id,
           :company_id => self.company_id,
@@ -90,14 +90,14 @@ class Settlement < ActiveRecord::Base
 
   def escpos
     vendor = self.vendor
-    
+
     order_format = "\n%7i %6.6s %10.10s %5.5s %10.10s"
     header_format = "%7.7s|%6.6s|%10.10s|%5.5s|%10.10s\n"
     sum_format = "%-27s %s %10.10s\n"
-    
+
     permissions = self.user.role.permissions
     friendly_unit = I18n.t('number.currency.format.friendly_unit', :locale => vendor.region)
-    
+
     costcenter_ids = self.vendor.cost_centers.existing.collect{ |cc| cc.id }
     costcenter_ids << nil
     costcenters_hash = costcenter_ids.collect do |ccid|
@@ -125,7 +125,7 @@ class Settlement < ActiveRecord::Base
       returnvalue = {:name => name, :sum => sum, :sum_refund => sum_refund}
     end
     payment_methods_hash.delete(nil)
-    
+
     list_of_orders = ''
     self.orders.existing.where(:finished => true).each do |o|
       t = I18n.l(o.finished_at, :format => :time_short)
@@ -140,7 +140,7 @@ class Settlement < ActiveRecord::Base
       ]
       list_of_orders += order_format % order_values
     end
-    
+
     list_of_payment_methods = ''
     list_of_payment_methods_refund = ''
     if permissions.include?('manage_payment_methods')
@@ -166,7 +166,7 @@ class Settlement < ActiveRecord::Base
       list_of_payment_methods += "\xc4" * 42 + "\n" unless list_of_payment_methods.empty?
       list_of_payment_methods_refund += "\xc4" * 42 + "\n" unless list_of_payment_methods_refund.empty?
     end
-    
+
     list_of_costcenters = ''
     if permissions.include?('manage_cost_centers')
       costcenters_hash.each do |hash|
@@ -179,7 +179,7 @@ class Settlement < ActiveRecord::Base
       end
       list_of_costcenters += "\xc4" * 42 + "\n" unless list_of_costcenters.empty?
     end
-    
+
     if self.initial_cash
       initial_cash_values = [
         I18n.t('various.begin'),
@@ -190,7 +190,7 @@ class Settlement < ActiveRecord::Base
     else
       initial_cash = ''
     end
-    
+
     if self.revenue
       revenue_values = [
         I18n.t('various.end'),
@@ -202,8 +202,8 @@ class Settlement < ActiveRecord::Base
     else
       revenue = ''
     end
-    
-    
+
+
     tax_attribute = vendor.country == 'us' ? :net : :gro
 
     list_of_taxes = ''
@@ -219,7 +219,7 @@ class Settlement < ActiveRecord::Base
       end
       list_of_taxes += "\xc4" * 42 + "\n" unless list_of_taxes.empty?
     end
-    
+
     list_of_taxes_categories = ''
     if permissions.include?('settlement_statistics_taxes_categories')
       self.vendor.taxes.existing.where(:include_in_statistics => true, :statistics_by_category => true).each do |tax|
@@ -249,7 +249,7 @@ class Settlement < ActiveRecord::Base
       end
       list_of_taxes_categories += "\xc4" * 42 + "\n" unless list_of_taxes_categories.empty?
     end
-    
+
     sum_values = [
       I18n.t(:sum),
       friendly_unit,
@@ -260,8 +260,8 @@ class Settlement < ActiveRecord::Base
     output =
     "\e@"     +  # Initialize Printer
     self.vendor.name.to_s +
-    "\n" + 
-    self.vendor.receipt_header_blurb.to_s + 
+    "\n" +
+    self.vendor.receipt_header_blurb.to_s +
     "\n" +
     "\ea\x00" +  # align left
     "\e!\x38" +  # doube tall, double wide, bold
@@ -290,11 +290,11 @@ class Settlement < ActiveRecord::Base
     "\n\n\n\n\n" +
     "\x1DV\x00" # paper cut
   end
-  
+
   def report_errors_to_technician
     if self.vendor.enable_technician_emails == true and self.vendor.technician_email
       report_string = ""
-      
+
       begin
       report, found = self.check
         PP.pp report, report_string
@@ -302,13 +302,13 @@ class Settlement < ActiveRecord::Base
         report_string = "Error during call to Settlement.check\n\n#{ e.message  }\n\n#{ e.backtrace.inspect }"
         UserMailer.technician_message(self.vendor, "Exception in Settlement #{ self.nr }", report_string).deliver
       end
-      
+
       if found
         UserMailer.technician_message(self.vendor, "Problems in Settlement #{ self.nr }", report_string).deliver
       end
     end
   end
-  
+
   def check
     @found = nil
     @tests = {
@@ -317,24 +317,24 @@ class Settlement < ActiveRecord::Base
                       :orders => [],
                      }
     }
-    
+
     self.orders.existing.each do |o|
       order_result, @found = o.check
       @tests[self.id][:orders] << order_result if @found
     end
-    
+
     perform_test({
               :should => self.orders.existing.sum(:sum).round(2),
               :actual => self.sum,
               :msg => "The cached sum attribute should match order sums",
               :type => :settlementSumMatchesOrderSums,
               })
-    
+
     return @tests, @found
   end
-  
+
 private
-  
+
   def perform_test(options)
     should = options[:should]
     actual = options[:actual]

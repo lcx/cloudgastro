@@ -11,7 +11,7 @@
 class Stock < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :group
   belongs_to :company
   belongs_to :vendor

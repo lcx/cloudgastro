@@ -10,11 +10,11 @@ class PaymentMethod < ActiveRecord::Base
   #attr_accessible :amount, :name, :order_id, :cash, :change
   include Scope
   include Base
-  
+
   belongs_to :order
   belongs_to :vendor
   belongs_to :company
-  
+
   validates_presence_of :name
   #validates_uniqueness_of :cash, :scope => :vendor_id
   #validates_uniqueness_of :change, :scope => :vendor_id
@@ -22,11 +22,11 @@ class PaymentMethod < ActiveRecord::Base
   def amount=(amnt)
     write_attribute :amount,amnt.to_s.gsub(',','.')
   end
-  
+
   def refund_name
     I18n.t(:refund) + ': ' + self.name
   end
-  
+
   def hide(by_user_id)
     self.hidden = true
     self.hidden_by = by_user_id

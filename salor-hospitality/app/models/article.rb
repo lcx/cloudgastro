@@ -12,13 +12,13 @@ class Article < ActiveRecord::Base
   include ImageMethods
   include Scope
   include Base
-  
+
   belongs_to :category
   belongs_to :statistic_category
   belongs_to :vendor
   belongs_to :company
   belongs_to :item_type
-  
+
   has_many :ingredients
   has_many :quantities
   has_many :existing_quantities, -> { where processed: false }, :class_name => Quantity
@@ -29,7 +29,7 @@ class Article < ActiveRecord::Base
 
   # scope :waiterpad, -> where(:hidden => false, :waiterpad => true ).order('position ASC')
 
-  # Validations 
+  # Validations
   validates_presence_of :name, :category_id, :taxes, :item_type_id
   validate :sku_unique_in_existing, :if => :sku_is_not_weird
   validates_each :price do |record, attr_name, value|
@@ -38,7 +38,7 @@ class Article < ActiveRecord::Base
     record.quantities.each { |qu| existing_quantities = true and break if not qu.hidden }
 
     record.errors.add(attr_name, I18n.t(:must_be_entered_either_for_article_or_for_quantity)) if not existing_quantities and !value
-    
+
     if not existing_quantities
       raw_value = record.send("#{attr_name}_before_type_cast") || value
       begin
@@ -48,7 +48,7 @@ class Article < ActiveRecord::Base
       end
     end
   end
- 
+
   # Nested attributes
   accepts_nested_attributes_for :ingredients, :allow_destroy => true, :reject_if => proc { |attrs| attrs.all? { |k, v| v.blank? } }
   accepts_nested_attributes_for :quantities, :allow_destroy => true, :reject_if => proc { |attrs| (attrs['prefix'].blank? && attrs['postfix'].blank? && attrs['price'].blank?) || attrs['hidden'] == 1 }
@@ -56,7 +56,7 @@ class Article < ActiveRecord::Base
 
 
   # Methods
-  
+
   def sku_is_not_weird
     if sku and not self.sku == self.sku.gsub(/[^0-9a-zA-Z]/, "") then
       errors.add(:sku, I18n.t("activerecord.errors.messages.dont_use_weird_skus"))
@@ -64,7 +64,7 @@ class Article < ActiveRecord::Base
     end
     return true
   end
-  
+
   def sku_unique_in_existing
     return if self.sku.blank?
     if self.new_record?
@@ -82,12 +82,12 @@ class Article < ActiveRecord::Base
     price = price.gsub(',', '.') if price.class == String
     write_attribute :price, price
   end
-  
+
   def inactive=(val)
     self.active = !val
     self.save!
   end
-  
+
   def inactive
     return self.active != true
   end
@@ -113,5 +113,5 @@ class Article < ActiveRecord::Base
     end
     self.save
   end
-  
+
 end

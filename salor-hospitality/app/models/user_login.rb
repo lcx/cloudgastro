@@ -1,13 +1,13 @@
 class UserLogin < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :company
   belongs_to :vendor
   belongs_to :user
-  
+
   before_save :set_duration
-  
+
   def set_duration
     if self.login.nil?
       # this is a logout item
@@ -17,12 +17,12 @@ class UserLogin < ActiveRecord::Base
       return self.duration
     end
   end
-  
+
   def self.duration_formatted(seconds)
     duration_hours = seconds / 60.0
     hours = Integer(duration_hours)
     minutes = (duration_hours - hours) * 60
     return "#{ hours }:#{ "%02i" % minutes }"
   end
-      
+
 end

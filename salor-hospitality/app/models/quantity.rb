@@ -11,7 +11,7 @@
 class Quantity < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :company
   belongs_to :vendor
   belongs_to :article
@@ -30,9 +30,9 @@ class Quantity < ActiveRecord::Base
       record.errors.add(attr_name, I18n.t('activerecord.errors.messages.empty')) if record.not_hidden? and value.empty? and record.prefix.empty?
     end
   end
-  
+
   after_commit :set_article_name
-  
+
   def sku_is_not_weird
     if sku and not self.sku == self.sku.gsub(/[^0-9a-zA-Z]/, "") then
       errors.add(:sku, I18n.t("activerecord.errors.messages.dont_use_weird_skus"))
@@ -40,7 +40,7 @@ class Quantity < ActiveRecord::Base
     end
     return true
   end
-  
+
   def sku_unique_in_existing
     return if self.sku.blank?
     if self.new_record?
@@ -62,11 +62,11 @@ class Quantity < ActiveRecord::Base
   def price=(price)
     write_attribute(:price, price.to_s.gsub(',', '.'))
   end
-  
+
   def set_article_name
     write_attribute(:article_name, self.article.name)
   end
-  
+
   def full_name
     "#{ self.prefix } #{ self.article.name } #{ self.postfix }"
   end

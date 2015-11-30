@@ -4,7 +4,7 @@ module Base
     from = self.class.to_s
     Base.log_action(from, txt, color)
   end
-    
+
   def self.log_action(from="",txt="",color=:green)
     colors = {
       :black          => "\e[0;30;49m",

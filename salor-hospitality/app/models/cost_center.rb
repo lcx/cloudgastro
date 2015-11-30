@@ -11,13 +11,13 @@
 class CostCenter < ActiveRecord::Base
   include Scope
   include Base
-  
+
   has_many :orders
   has_many :items
   belongs_to :company
   belongs_to :vendor
   validates_presence_of :name
-  
+
   def hide(user_id)
     self.hidden = true
     self.hidden_by = user_id

@@ -11,7 +11,7 @@
 class Presentation < ActiveRecord::Base
   include Scope
   include Base
-  
+
   has_many :partials
   belongs_to :company
   belongs_to :vendor

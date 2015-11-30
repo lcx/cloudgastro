@@ -1,13 +1,13 @@
 class OptionItem < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :company
   belongs_to :vendor
   belongs_to :order
   belongs_to :item
   belongs_to :option
-  
+
   def calculate_totals
     self.count = self.item.count
     if self.hidden
@@ -17,7 +17,7 @@ class OptionItem < ActiveRecord::Base
     end
     self.save
   end
-  
+
   def check
     @found = nil
     @tests = {
@@ -25,7 +25,7 @@ class OptionItem < ActiveRecord::Base
                        :tests => [],
                        }
     }
-    
+
     if self.item.refunded == true
       perform_test({
                     :should => 0,
@@ -41,14 +41,14 @@ class OptionItem < ActiveRecord::Base
                     :type => :optionItemSumCorrect,
                     })
     end
-    
+
     perform_test({
                   :should => self.count,
                   :actual => self.item.count,
                   :msg => "An OptionItem should have the same count as the Item",
                   :type => :optionItemSameCountAsItem,
                   })
-    
+
     perform_test({
                   :should => [self.hidden, self.hidden_by, self.hidden_at],
                   :actual => [self.item.hidden, self.item.hidden_by, self.item.hidden_at],
@@ -66,16 +66,16 @@ class OptionItem < ActiveRecord::Base
     puts "\n *** WARNING: OptionItem is deleted, tests are irrelevant! *** \n" if self.hidden
     return @tests, @found
   end
-  
+
   def hide(by_user)
     self.hidden = true
     self.hidden_by = by_user
     self.hidden_at = Time.now
     self.save
   end
-  
+
   private
-  
+
   def perform_test(options)
     should = options[:should]
     actual = options[:actual]
@@ -90,6 +90,6 @@ class OptionItem < ActiveRecord::Base
     } if pass == false
     @found = true if pass == false
   end
-  
-  
+
+
 end

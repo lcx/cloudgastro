@@ -11,14 +11,14 @@
 class Receipt < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :order
   belongs_to :user
   belongs_to :vendor
   belongs_to :company
   belongs_to :vendor_printer
   belongs_to :settlement
-  
+
   def to_plaintext
     txt = self.content
     txt.gsub! "\e@", ""

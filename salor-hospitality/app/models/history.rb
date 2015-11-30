@@ -11,12 +11,12 @@
 class History < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :user
   belongs_to :model, :polymorphic => true
   belongs_to :company
   belongs_to :vendor
-  
+
   def changes_made=(changes)
     if changes.class == Hash
       write_attribute :changes_made, changes.to_yaml
@@ -24,7 +24,7 @@ class History < ActiveRecord::Base
       write_attribute :changes_made, changes.to_s
     end
   end
-  
+
   def escpos
     output = "\e@" +
         "\e!\x38" +       # big font
@@ -34,27 +34,27 @@ class History < ActiveRecord::Base
         "\n\n" +
         "#{ self.user.login }@#{ self.ip }" +
         "\n\n"
-    
+
     output += self.changes_made
-    
+
     output += "\n\n\n\n\n\n\n" +         # space
           "\x1DV\x00\x0C"            # paper cut
     return output
   end
-  
+
   def print
     return if self.vendor.nil? or self.vendor.history_print != true
-    
+
     data = self.escpos
     vendor_printers = self.vendor.vendor_printers.existing
-    
+
     print_engine = Escper::Printer.new self.company.mode,
         vendor_printers,
         File.join(SalorHospitality::Application::SH_DEBIAN_SITEID, self.vendor.hash_id)
     print_engine.open
     bytes_written, content_sent = print_engine.print(vendor_printers.first.id, data)
     print_engine.close
-    
+
     if SalorHospitality::Application::CONFIGURATION[:receipt_history] == true
       r = Receipt.new
       r.user_id = self.user_id
@@ -66,7 +66,7 @@ class History < ActiveRecord::Base
       r.bytes_written = bytes_written
       r.save
     end
-    
+
     return data
   end
 end

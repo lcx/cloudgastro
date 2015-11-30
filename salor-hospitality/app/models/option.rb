@@ -12,7 +12,7 @@ class Option < ActiveRecord::Base
   include ImageMethods
   include Scope
   include Base
-  
+
   belongs_to :company
   belongs_to :vendor
   has_and_belongs_to_many :categories
@@ -40,7 +40,7 @@ class Option < ActiveRecord::Base
     end
     self.save
   end
-  
+
   def hide(by_user_id)
     self.hidden = true
     self.hidden_by = by_user_id

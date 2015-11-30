@@ -9,14 +9,14 @@
 class TaxAmount < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :tax
   belongs_to :surcharge
   belongs_to :vendor
   belongs_to :company
-  
+
   validates_presence_of :tax_id
-  
+
   def amount=(amount)
     write_attribute :amount, amount.to_s.gsub(',','.')
   end

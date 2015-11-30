@@ -9,7 +9,7 @@
 class Surcharge < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :vendor
   belongs_to :company
   belongs_to :season
@@ -57,7 +57,7 @@ class Surcharge < ActiveRecord::Base
         end
       else
         guest_types.each do |gt|
-          gt_id = params[:common_surcharge] ? nil : gt.id 
+          gt_id = params[:common_surcharge] ? nil : gt.id
           # this matches one single surcharge
           surcharge = vendor.surcharges.where(
             :season_id => s.id,

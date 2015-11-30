@@ -9,7 +9,7 @@
 class RoomPrice < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :vendor
   belongs_to :company
   has_many   :rooms
@@ -31,7 +31,7 @@ class RoomPrice < ActiveRecord::Base
       end
     end
   end
-  
+
   def base_price=(base_price)
     write_attribute :base_price, base_price.to_s.gsub(',','.')
   end

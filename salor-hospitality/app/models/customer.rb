@@ -9,7 +9,7 @@
 class Customer < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :vendor
   belongs_to :company
   has_many :orders
@@ -21,7 +21,7 @@ class Customer < ActiveRecord::Base
   validates_uniqueness_of :email, :scope => :company_id
   validates_presence_of :password
   validate :password_length
-  
+
   def password_length
     if self.password and self.password.length < 6
       errors.add(:password, I18n.t('activerecord.errors.messages.too_short', :count => 6))

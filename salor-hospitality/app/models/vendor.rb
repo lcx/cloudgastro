@@ -69,20 +69,20 @@ class Vendor < ActiveRecord::Base
   validates :update_resources_interval, :numericality => { :greater_than => 101 }
   validates :automatic_printing_interval, :numericality => { :greater_than => 20 }
   validate :public_holidays_formatting_valid
-  
+
   after_commit :sanitize_vendor_printer_paths
-  
+
   before_save :set_hash_id
-  
+
 
   accepts_nested_attributes_for :vendor_printers, :allow_destroy => true, :reject_if => proc { |attrs| attrs['name'] == '' }
 
   accepts_nested_attributes_for :images, :allow_destroy => true, :reject_if => :all_blank
-  
-    
+
+
   def public_holidays_formatting_valid
     return if self.public_holidays.blank?
-    
+
     lines = self.public_holidays.split("\n")
     lines.each do |l|
       stripped_line = l.strip
@@ -93,38 +93,38 @@ class Vendor < ActiveRecord::Base
       end
     end
   end
-  
+
   def identifer_present_and_ascii
     if self.identifier.blank?
       errors.add(:identifier, I18n.t('activerecord.errors.messages.empty'))
       return
     end
-    
+
     if self.identifier.length < 4
       errors.add(:identifier, I18n.t('activerecord.errors.messages.too_short', :count => 4))
       return
     end
-    
+
     match = /[a-zA-Z0-9_-]*/.match(self.identifier)[0]
     if match != self.identifier
       errors.add(:identifier, I18n.t('activerecord.errors.messages.must_be_ascii'))
     end
   end
-  
+
   def utc_offset_hours
     # The offset of the Rails application
     Time.zone.now.utc_offset/60/60
   end
-  
+
   def total_utc_offset_hours
     # The additional offset of the store location
     utc_offset_hours +  self.time_offset
   end
-  
+
   def existing_tables
     self.tables.existing
   end
-  
+
   def sanitize_vendor_printer_paths
     self.vendor_printers.existing.update_all :company_id => self.company_id
     self.vendor_printers.existing.each do |vp|
@@ -137,7 +137,7 @@ class Vendor < ActiveRecord::Base
     self.hidden_at = Time.now
     self.save
   end
-  
+
   def get_region
     SalorHospitality::Application::COUNTRIES_REGIONS[self.country].to_sym
   end
@@ -152,7 +152,7 @@ class Vendor < ActiveRecord::Base
       write_attribute :rlogo_header, nil
     else
       data.rewind
-      write_attribute :rlogo_header, Escper::Img.new(data.read, :blob).to_s 
+      write_attribute :rlogo_header, Escper::Img.new(data.read, :blob).to_s
     end
   end
 
@@ -174,7 +174,7 @@ class Vendor < ActiveRecord::Base
     array.delete(nil)
     return array.sort
   end
-  
+
   # currently supported are attributes "invoice" and "settlement"
   def get_next_transaction_number(attr)
     largest = self.send("largest_#{ attr }_number")
@@ -213,7 +213,7 @@ class Vendor < ActiveRecord::Base
     table_models          = self.tables.existing
     user_models           = self.company.users.existing
     customer_models       = self.company.customers.existing.active
-    
+
     cstmers = {}
     cstmers[:regulars] = []
     x = 0
@@ -236,7 +236,7 @@ class Vendor < ActiveRecord::Base
         :n => c.full_name(true)
       }
     end
-    
+
     quantities = {}
     quantity_models.each do |q|
       ai = q.article_id
@@ -318,7 +318,7 @@ class Vendor < ActiveRecord::Base
         :chg => pm.change
       }
     end
-    
+
     tables = {}
     table_models.each do |t|
       tid = t.id
@@ -327,7 +327,7 @@ class Vendor < ActiveRecord::Base
         :n => t.name
       }
     end
-    
+
     users = {}
     user_models.each do |u|
       uid = u.id
@@ -360,7 +360,7 @@ class Vendor < ActiveRecord::Base
 
     room_prices = Hash.new
     self.room_prices.existing.active.each do |rp|
-      room_prices[rp.id] = { 
+      room_prices[rp.id] = {
         :rt => rp.room_type_id,
         :gt => rp.guest_type_id,
         :p => rp.base_price,
@@ -433,7 +433,7 @@ class Vendor < ActiveRecord::Base
 
     return resources.to_json
   end
-  
+
   def vendor_printers_hash
     vendor_printer_models = self.vendor_printers.existing
     vendor_printers = {}
@@ -443,7 +443,7 @@ class Vendor < ActiveRecord::Base
     end
     return vendor_printers
   end
-  
+
   def csv_dump(model, from, to)
     case model
     when 'Item'
@@ -460,11 +460,11 @@ class Vendor < ActiveRecord::Base
 
   def fisc_dump(from, to, location)
     tmppath = SalorHospitality::Application.config.paths['tmp'].first
-    
+
     label = "salor-hospitality-fiscal-backup-#{ I18n.l(Time.now, :format => :datetime_iso2) }"
     dumppath = File.join(tmppath, label)
     FileUtils.mkdir_p(dumppath)
-      
+
     # DUMP DATABASE
     dbconfig = YAML::load(File.open(SalorHospitality::Application.config.paths['config/database'].first))
     sqldump_in_tmp = File.join(tmppath, 'database.sql')
@@ -474,38 +474,38 @@ class Vendor < ActiveRecord::Base
     database = dbconfig[mode]['database']
     `mysqldump -u #{username} -p#{password} #{database} > #{dumppath}/database.sql`
 
-    
+
     # DUMP LOGFILE
     logfile = SalorHospitality::Application.config.paths['log'].first
     logfile_basename = File.basename(logfile)
     logfile_in_tmp = File.join(tmppath, logfile_basename)
     FileUtils.cp(logfile, dumppath)
-    
+
 
     # GENERATE CSV FILES
     self.dump_all(from, to, dumppath)
-    
+
     # ZIP IT UP
     zip_outfile = "#{ location }/#{ label }.zip"
     Dir.chdir(dumppath)
     `zip -r #{ zip_outfile } .`
     `chmod 777 #{ zip_outfile }`
-    
+
     FileUtils.rm_r dumppath # causes exception
-    
+
     return zip_outfile
   end
-  
+
   def package_upgrade
     lines = `zcat /usr/share/doc/salor-hospitality/changelog.gz`.split("\n")
     puts "Currently installed version is #{lines.first}"
-    
+
     last_upgrade_history = self.histories.where(:action_taken => "package_upgrade").last
-    
+
     if last_upgrade_history
       last_version = last_upgrade_history.changes_made
       puts "Last version was #{ last_version }"
-      
+
       match = /\((.*?)\)/.match(lines[0])
       version = match[1] if match
 
@@ -514,7 +514,7 @@ class Vendor < ActiveRecord::Base
         break if l == last_version
         difflines << l if l.include?('*')
       end
-      
+
       vendor_printers = self.vendor_printers.existing
       if vendor_printers.any?
         puts "Printing system change report in accordance to financial regulations"
@@ -540,7 +540,7 @@ class Vendor < ActiveRecord::Base
         print_engine.close
       end
     end
-    
+
     h = self.histories.new
     h.company_id = h.company_id
     h.action_taken = "package_upgrade"
@@ -548,27 +548,27 @@ class Vendor < ActiveRecord::Base
     h.save
     puts "Created History record for package upgrade"
   end
-  
+
   def offset
     self.id - self.company.vendors.existing.first.id
   end
-  
+
   def region
     SalorHospitality::Application::COUNTRIES_REGIONS[self.country]
   end
-  
+
   def identifier
     ident = read_attribute :identifier
     hid = "identifier_unset" if ident.blank?
     return ident
   end
-  
+
   def hash_id
     hid = read_attribute :hash_id
     hid = "hash_id_unset" if hid.blank?
     return hid
   end
-  
+
   def set_hash_id
     hid = read_attribute :hash_id
     unless hid.blank?
@@ -578,132 +578,132 @@ class Vendor < ActiveRecord::Base
     self.hash_id = "#{ self.identifier }#{ generate_random_string[0..20] }"
     ActiveRecord::Base.logger.info "Set hash_id to #{ self.hash_id }."
   end
-  
+
   def dump_all(from, to, device)
     tfrom = from.strftime("%Y%m%d")
     tto = to.strftime("%Y%m%d")
-    
+
     items = self.items.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalityItems#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;count;article_id;order_id;created_at;updated_at;quantity_id;price;max_count;min_count;user_id;hidden;hidden_at;hidden_by;category_id;tax_sum;refunded;refund_sum;refunded_by;settlement_id;cost_center_id;taxes"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(items, Item, attributes)
     end
-    
+
     booking_items = self.booking_items.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalityBookingItems#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;booking_id;guest_type_id;sum;created_at;updated_at;count;base_price;refund_sum;taxes;from_date;to_date;season_id;duration;booking_item_id;ui_parent_id;ui_id;unit_sum;room_id;date_locked;tax_sum;hidden;hidden_at;hidden_by"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(booking_items, BookingItem, attributes)
     end
-    
+
     surcharge_items = self.surcharge_items.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalitySurchargeItems#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;surcharge_id;booking_item_id;amount;season_id;guest_type_id;taxes;sum;duration;count;from_date;to_date;tax_sum;booking_id;hidden;hidden_at;hidden_by;created_at;updated_at"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(surcharge_items, SurchargeItem, attributes)
     end
-    
+
     bookings = self.bookings.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalityBookings#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;from_date;to_date;customer_id;sum;paid;note;created_at;updated_at;room_id;finished;user_id;refund_sum;nr;change_given;duration;taxes;booking_item_sum;finished_at;paid_at;tax_sum;hidden;hidden_at;hidden_by"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(bookings, Booking, attributes)
     end
-    
+
     orders = self.orders.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalityOrders#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;finished;table_id;user_id;settlement_id;created_at;updated_at;sum;cost_center_id;printed_from;nr;tax_id;refund_sum;note;customer_id;hidden;hidden_at;hidden_by;printed;paid;booking_id;taxes;finished_at;paid_at;reactivated;reactivated_by;reactivated_at"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(orders, Order, attributes)
     end
-    
+
     taxes = self.taxes
     File.open("#{device}/SalorHospitalityTaxes#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;percent;name;created_at;updated_at;letter;hidden;hidden_by;hidden_at"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(taxes, Tax, attributes)
     end
-    
+
     option_items = self.option_items.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalityOptionItem#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;option_id;item_id;order_id;price;name;count;sum;created_at;updated_at;no_ticket;separate_ticket;hidden;hidden_by;hidden_at"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(option_items, OptionItem, attributes)
     end
-    
+
     tax_items = self.tax_items.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalityTaxItem#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;tax_id;item_id;booking_item_id;order_id;booking_id;settlement_id;gro;net;tax;created_at;updated_at;letter;surcharge_item_id;name;percent;hidden;hidden_by;hidden_at;refunded;cost_center_id;category_id"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(tax_items, TaxItem, attributes)
     end
-    
+
     pmis = self.payment_method_items.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalityPaymentMethodItems#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;payment_method_id;order_id;amount;created_at;updated_at;booking_id;refunded;cash;refund_item_id;settlement_id;cost_center_id;change;hidden;hidden_by;hidden_at"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(pmis, PaymentMethodItem, attributes)
     end
-    
+
     settlements = self.settlements.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalitySettlements#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;nr;revenue;user_id;created_at;updated_at;finished;initial_cash;sum;hidden;hidden_by;hidden_at"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(settlements, Settlement, attributes)
     end
-    
+
     options = self.options
     File.open("#{device}/SalorHospitalityOptions#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;name;price;created_at;updated_at;hidden;hidden_by;hidden_at;active;separate_ticket;no_ticket"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(options, Option, attributes)
     end
-    
+
     articles = self.articles
     File.open("#{device}/SalorHospitalityArticles#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;name;description;category_id;price;active;created_at;updated_at;hidden;hidden_at;hidden_by"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(articles, Article, attributes)
     end
-    
+
     quantities = self.quantities
     File.open("#{device}/SalorHospitalityQuantities#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;prefix;postfix;price;article_id;created_at;updated_at;active;hidden;hidden_by;hidden_at;category_id;article_name"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(quantities, Quantity, attributes)
     end
-    
+
     users = self.users
     File.open("#{device}/SalorHospitalityUsers#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;login;title;created_at;updated_at;role_id;active;hidden;hidden_at;hidden_by;last_active_at;last_login_at;last_logout_at;email"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(users, User, attributes)
     end
-    
+
     cost_centers = self.cost_centers
     File.open("#{device}/SalorHospitalityCostCenters#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;name;description;created_at;updated_at;hidden;hidden_by;hidden_at;no_payment_methods"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(cost_centers, CostCenter, attributes)
     end
-    
-    
+
+
     payment_methods = self.payment_methods
     File.open("#{device}/SalorHospitalityPaymentMethods#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;name;created_at;updated_at;hidden;hidden_by;hidden_at;cash;change"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(payment_methods, PaymentMethod, attributes)
     end
-    
-    
+
+
     histories = self.histories.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalityHistories#{tfrom}-#{tto}.csv","w") do |f|
       attributes = "id;url;user_id;action_taken;model_type;model_id;ip;changes_made;params;created_at;updated_at"
       f.write("#{attributes}\n")
       f.write Vendor.to_csv(histories, History, attributes)
     end
-    
+
     receipts = self.receipts.where(:created_at => from..to)
     File.open("#{device}/SalorHospitalityReceipts#{tfrom}-#{tto}.txt","w:ASCII-8BIT") do |f|
       receipts.each do |r|
@@ -712,12 +712,12 @@ class Vendor < ActiveRecord::Base
         f.write r.content.gsub("\e@\e!8\n", "").gsub("\x1DV\x00\ep\x00\x99\x99\f".force_encoding('ASCII-8BIT'), "")
       end
     end
-    
+
     # Missing models for report, but not critical: Room, RoomType, RoomPrice, GuestType, Surcharge, Season
   end
-  
+
   private
-  
+
   def Vendor.to_csv(objects, klass, attributes)
     attrs = attributes.split(";")
     formatstring = ""
@@ -747,10 +747,10 @@ class Vendor < ActiveRecord::Base
       end
       lines << sprintf(formatstring, *values)
     end
-    
+
     return lines.join("\n")
   end
-  
+
   def generate_random_string
     collection = [('a'..'z'),('A'..'Z'),('0'..'9')].map{|i| i.to_a}.flatten
     (0...128).map{ collection[rand(collection.length)] }.join

@@ -11,7 +11,7 @@
 class Table < ActiveRecord::Base
   include Scope
   include Base
-  
+
   has_many :orders
   has_many :histories, :as => 'model'
   belongs_to :user
@@ -24,7 +24,7 @@ class Table < ActiveRecord::Base
   validates_presence_of :name
   validates_uniqueness_of :name, :scope => :vendor_id
   has_and_belongs_to_many :users
-  
+
   def update_color
     orders = self.vendor.orders.existing.where(:finished => false, :table_id => self.id)
     lastorder = orders.last
@@ -40,23 +40,23 @@ class Table < ActiveRecord::Base
       self.save
     end
   end
-  
+
   def move_name
     name = self.active_user_id ? '☒' : '☐'
     name += self.name
     return name
   end
-  
+
   def set_request_finish
     self.request_finish = true
     self.save
   end
-  
+
   def set_request_waiter
     self.request_waiter = true
     self.save
   end
-  
+
   def hide(by_user_id)
     self.name = "DEL#{(rand(99999) + 10000).to_s[0..4]}#{self.name}"
     self.hidden = true

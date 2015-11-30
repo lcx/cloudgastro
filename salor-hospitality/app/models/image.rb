@@ -13,7 +13,7 @@ require 'rmagick'
 class Image < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :imageable, :polymorphic => true
   belongs_to :vendor
   belongs_to :company
@@ -116,7 +116,7 @@ class Image < ActiveRecord::Base
 
 
 
-  def process    
+  def process
     if @file_data
       # Delete existing image dirs
       VERSIONS.each { |ver| FileUtils.rm_rf(plot_dir(ver)) if File.exists?(plot_dir(ver)) }
@@ -168,7 +168,7 @@ class Image < ActiveRecord::Base
     hash_id = self.vendor.hash_id if self.vendor and not self.vendor.hash_id.blank?
     FileUtils.rm_rf File.join(DIRECTORY, hash_id.gsub('#', ''), "images", "s#{sub_dir}", "#{self.id}")
   end
-  
+
   def self.destroy_nulls
     Image.where(:name => nil).delete_all
   end

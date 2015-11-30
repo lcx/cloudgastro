@@ -11,7 +11,7 @@
 class Tax < ActiveRecord::Base
   include Scope
   include Base
-  
+
   has_many :items
   has_many :orders
   belongs_to :company
@@ -27,12 +27,12 @@ class Tax < ActiveRecord::Base
   def custom_name
     @custom_name = percent.to_s + '%, ' + name
   end
-  
+
   def percent=(percent)
     percent = percent.gsub(',', '.') if percent.class == String
     write_attribute(:percent, percent)
   end
-  
+
   def hide(by_user_id)
     self.hidden = true
     self.hidden_by = by_user_id

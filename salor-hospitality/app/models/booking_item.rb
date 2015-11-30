@@ -11,7 +11,7 @@ class BookingItem < ActiveRecord::Base
 
   include Scope
   include Base
-  
+
   belongs_to :booking
   belongs_to :vendor
   belongs_to :company
@@ -23,9 +23,9 @@ class BookingItem < ActiveRecord::Base
   has_many :tax_items
 
   serialize :taxes
-  
+
   alias_attribute :parent_key, :ui_parent_id
-  
+
   # For multi-season bookings, the JS frontend maintains parent and children booking items. The parent booking items represent the first covered season. The children booking items represent all other covered seasons. We need to model and store this parent/child relationship in the DB, so that we can deliver the same relations back as JSON.
   def self.make_multiseason_associations
     BookingItem.where('ui_parent_id IS NOT NULL AND booking_item_id IS NULL').each do |bi|
@@ -36,7 +36,7 @@ class BookingItem < ActiveRecord::Base
     # since frontend IDs are unique only per booking form call, and they have done their due, we destroy them.
     BookingItem.where('ui_parent_id IS NOT NULL OR ui_id IS NOT NULL').update_all :ui_parent_id => nil, :ui_id => nil
   end
-  
+
   def guest_type_id=(id)
     if id.to_i == 0
       write_attribute :guest_type_id, nil
@@ -44,7 +44,7 @@ class BookingItem < ActiveRecord::Base
       write_attribute :guest_type_id, id
     end
   end
-  
+
   def from_date=(from_date)
     write_attribute :from_date, DateTime.parse(from_date)
   end
@@ -58,9 +58,9 @@ class BookingItem < ActiveRecord::Base
     return if ids.nil?
     # Rails loses session and params for this function if surcharges are selected in the UI. Fortunately, we can copy vendor and company from other models. It is insane, but see for yourself:
     #puts "XXXXXXXXXXXXXXXX #{@current_vendor.inspect}"
-    
+
     ids.delete '0' # 0 is sent by JS always, otherwise surchargeslist is not sent by ajax call
-    
+
     self.surcharge_items.each do |si|
       si.hide(0)
     end
@@ -94,13 +94,13 @@ class BookingItem < ActiveRecord::Base
     self.surcharge_items.existing.update_all :hidden => true, :hidden_by => by_user_id
     self.tax_items.existing.update_all :hidden => true, :hidden_by => by_user_id
   end
-  
+
   def invoice_label
     label = [self.booking.room.room_type.name]
     label << self.surcharge_items.collect{ |si| si.surcharge.name }.join(', ') if self.surcharge_items.any?
     label.join(', ')
   end
-  
+
   def tax_letters
     letters = []
     letters << self.guest_type.taxes.collect{ |t| t.letter } if self.guest_type_id
@@ -110,7 +110,7 @@ class BookingItem < ActiveRecord::Base
     letters.flatten!
     letters.uniq.join(', ')
   end
-  
+
   def calculate_totals
     if self.guest_type_id.nil?
       self.base_price = 0
@@ -118,10 +118,10 @@ class BookingItem < ActiveRecord::Base
       roomp = RoomPrice.where(:season_id => self.season_id, :room_type_id => self.booking.room.room_type_id, :guest_type_id => self.guest_type_id).first
       self.base_price = roomp.base_price
     end
-    
+
     self.unit_sum = (self.base_price + self.surcharge_items.existing.sum(:amount)).round(3)
     self.sum = (self.unit_sum * self.count * self.duration).round(3)
-    
+
     if self.guest_type_id.nil?
       self.calculate_taxes([])
     else
@@ -130,7 +130,7 @@ class BookingItem < ActiveRecord::Base
 
     self.save
   end
-  
+
   def calculate_taxes(tax_array)
     self.taxes = {}
     tax_sum_total = 0
@@ -144,7 +144,7 @@ class BookingItem < ActiveRecord::Base
       end
       tax_sum = (gro - net).round(3)
       self.taxes[tax.id] = {:p => tax.percent, :t => tax_sum, :g => gro, :n => net, :l => tax.letter, :e => tax.name }
-      
+
       # TaxItem creation
       tax_item = TaxItem.where(:vendor_id => self.vendor_id, :company_id => self.company_id, :booking_item_id => self.id, :surcharge_item_id => nil, :tax_id => tax.id, :booking_id => self.booking_id).first
       if tax_item
@@ -155,7 +155,7 @@ class BookingItem < ActiveRecord::Base
       tax_sum_total += tax_sum
     end
 
-    # now, add surcharges to unit_sum, sum, and taxes hash    
+    # now, add surcharges to unit_sum, sum, and taxes hash
     self.surcharge_items.existing.each do |si|
       si.taxes.each do |k,v|
         if self.taxes.has_key? k
@@ -174,23 +174,23 @@ class BookingItem < ActiveRecord::Base
     self.tax_sum = tax_sum_total
     self.save
   end
-  
+
   def check
     self.surcharge_items.each do |si|
       si.check
     end
-    
+
     item_hash_tax = 0
     self.taxes.each do |k,v|
       item_hash_tax += v[:t]
     end
     test1 = self.tax_sum.round(2) == item_hash_tax.round(2)
     raise "BookingItem test1 failed for id #{ self.id }" unless test1
-    
+
     unless self.hidden
       test1a = self.tax_sum.round(2) == (self.surcharge_items.existing.sum(:tax_sum) + self.tax_items.where(:surcharge_item_id => nil).sum(:tax) ).round(2)
       raise "BookingItem test1a failed for id #{ self.id }" unless test1a
-    
+
       test5 = self.tax_sum.round(2) == self.tax_items.existing.sum(:tax).round(2)
       raise "BookingItem test5 failed for id #{ self.id }" unless test5
 
@@ -201,8 +201,8 @@ class BookingItem < ActiveRecord::Base
       test7 = self.surcharge_items.all?{ |si| si.hidden }
       raise "BookingItem test7 failed for id #{ self.id }" unless test7
     end
-    
+
     return true
   end
-  
+
 end

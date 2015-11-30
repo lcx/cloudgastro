@@ -11,12 +11,12 @@
 class VendorPrinter < ActiveRecord::Base
   include Scope
   include Base
-  
+
   belongs_to :company
   belongs_to :vendor
   has_many :categories
   has_many :receipts
-  
+
   def sanitize_path
     unless self.company.mode == 'local'
       self.update_attribute :path, self.path.gsub(/[\/\s'"\&\^\$\#\!;\*]/,'_').gsub(/[^\w\/\.\-@]/,'')

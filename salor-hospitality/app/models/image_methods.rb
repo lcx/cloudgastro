@@ -10,7 +10,7 @@
 
 module ImageMethods
   include Base
-  
+
   def image(typ=nil)
     if typ.nil? then
       return self.images.first.image if self.images.first and self.images.first.id
@@ -28,6 +28,6 @@ module ImageMethods
       tmp = self.images.where(:image_type => typ).first
       return tmp.thumb if tmp and tmp.id
     end
-    return File.join("/assets", "empty.png")    
+    return File.join("/assets", "empty.png")
   end
 end

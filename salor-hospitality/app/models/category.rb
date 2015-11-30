@@ -12,7 +12,7 @@ class Category < ActiveRecord::Base
   include ImageMethods
   include Scope
   include Base
-  
+
   belongs_to :tax
   belongs_to :vendor_printer
   belongs_to :company
@@ -32,7 +32,7 @@ class Category < ActiveRecord::Base
     return "/assets/category_blank.png" if self.icon.nil?
     "/assets/category_#{self.icon}.png"
   end
-  
+
   def self.sort(categories,type)
     type.map! {|t| t.to_i}
     categories.each do |cat|

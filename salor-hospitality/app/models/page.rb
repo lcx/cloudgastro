@@ -12,7 +12,7 @@ class Page < ActiveRecord::Base
   include ImageMethods
   include Scope
   include Base
-  
+
   belongs_to :vendor
   belongs_to :company
   belongs_to :customer
@@ -20,7 +20,7 @@ class Page < ActiveRecord::Base
   has_many :images, :as => :imageable
 
   accepts_nested_attributes_for :images, :allow_destroy => true, :reject_if => :all_blank
-  
+
   def evaluate_partial_htmls
     partials = self.partials
     partial_htmls = []
