@@ -12,10 +12,10 @@ class Item < ActiveRecord::Base
   #attr_accessible :position, :comment, :price, :article_id, :quantity_id, :category_id, :count, :printed_count, :usage, :hidden, :customers_ids
   #attr_accessible :s, :o, :p, :ai, :qi, :ci, :c, :pc, :u, :x, :cids
   #attr_accessible :user_id, :confirmation_count, :preparation_user_id, :delivery_user_id, :vendor_id, :company_id, :hidden_by, :price, :order_id, :scribe, :settlement_id, :cost_center_id, :statistic_category_id
-  
+
   include Scope
   include Base
-  
+
   belongs_to :order
   belongs_to :article
   belongs_to :quantity
@@ -27,7 +27,7 @@ class Item < ActiveRecord::Base
   belongs_to :settlement
   belongs_to :cost_center
   belongs_to :item_type
-  
+
   has_many :tax_items
   has_many :option_items
   validates_presence_of :count, :article_id
@@ -55,7 +55,7 @@ class Item < ActiveRecord::Base
       self.option_items.each do |option_item|
         separated_option_item = OptionItem.create option_item.attributes
         separated_item.option_items << separated_option_item
-      end        
+      end
       separated_item.count = 0
       separated_item.item = self
       self.item = separated_item
@@ -65,11 +65,11 @@ class Item < ActiveRecord::Base
 
     separated_item.count += 1
     separated_item.save
-    separated_item.option_items.each do |o| 
+    separated_item.option_items.each do |o|
       o.calculate_totals
     end
     self.save
-    self.option_items.each do |o| 
+    self.option_items.each do |o|
       o.calculate_totals
     end
     separated_item.calculate_totals
@@ -100,7 +100,7 @@ class Item < ActiveRecord::Base
     write_attribute :scribe, scribe
     write_attribute :scribe_escpos, Escper::Img.new(self.scribe_bitmap,:obj).to_s
   end
-  
+
   def gross
     if self.vendor.country == "us"
       self.sum + self.tax_sum
@@ -120,7 +120,7 @@ class Item < ActiveRecord::Base
     self.calculate_taxes(self.article.taxes)
     self.save
   end
-  
+
   def calculate_taxes(tax_array)
     self.taxes = {}
     tax_sum_total = 0
@@ -146,7 +146,7 @@ class Item < ActiveRecord::Base
     self.tax_sum = tax_sum_total
     self.save
   end
-  
+
   def create_tax_items
     self.taxes.each do |tax_id, val|
       gro = val[:g]
@@ -155,7 +155,7 @@ class Item < ActiveRecord::Base
       letter = val[:l]
       percent = val[:p]
       name = val[:e]
-      
+
       ti = TaxItem.new
       ti.vendor_id = self.vendor_id
       ti.company_id = self.company_id
@@ -175,7 +175,7 @@ class Item < ActiveRecord::Base
       ti.save!
     end
   end
-  
+
 
   def create_option_items_from_ids(ids)
     return if ids.nil?
@@ -208,7 +208,7 @@ class Item < ActiveRecord::Base
     end
     p
   end
-  
+
   def count=(count)
     c = count.to_i
     write_attribute(:count, c)
@@ -225,7 +225,7 @@ class Item < ActiveRecord::Base
     return self.price * self.count + self.option_items.sum(:sum)
     # returns net for USA, gross for every other country
   end
-  
+
   def price_with_options
     self.price + self.option_items.sum(:price)
   end
@@ -241,7 +241,7 @@ class Item < ActiveRecord::Base
     return u if u
     return self.article.usage if self.article
   end
-  
+
   def formatted_comment
     self.comment ? '<br/>' + self.comment : ''
   end
@@ -278,20 +278,20 @@ class Item < ActiveRecord::Base
     self.item = nil
     self.save
   end
-  
+
   def self.split_items(items)
     first_item_id = items.first[0]
     first_item = Item.find_by_id(first_item_id)
-    
+
     parent_order = first_item.order
     split_order = parent_order.order
-    
+
     # the following should never happen, but since moving items to an already finished order is a very touchy issue, we unlink again, just as a redundant safety measure.
     if split_order and split_order.finished
       split_order.unlink
       split_order = nil
     end
-    
+
     if split_order.nil?
       split_order = Order.new
       split_order.table_id = parent_order.table_id
@@ -302,18 +302,18 @@ class Item < ActiveRecord::Base
       parent_order.order = split_order
       split_order.order = parent_order
     end
-    
+
     items.each do |k,v|
       item = Item.find_by_id(k)
       item.split(v['split_count'].to_i, parent_order, split_order) unless v['split_count'].to_i.zero?
     end
-    
+
     if parent_order.items.existing.any?
       parent_order.calculate_totals
     else
-      parent_order.hide(-3) 
+      parent_order.hide(-3)
     end
-    
+
     split_order.calculate_totals
   end
 
@@ -353,7 +353,7 @@ class Item < ActiveRecord::Base
       partner_item.max_count = 0
       self.item = partner_item
       partner_item.item = self
-      partner_item.order = split_order 
+      partner_item.order = split_order
     end
     count = self.count if count > self.count # do not decrement into negative numbers
     partner_item.count += count
@@ -371,11 +371,11 @@ class Item < ActiveRecord::Base
       self.calculate_totals
     end
   end
-  
+
   def compose_option_names_without_price
     self.option_items.collect{ |o| "#{ o.name }" }.join("<br />")
   end
-  
+
   def rotate_tax
     tax_ids = self.vendor.taxes.existing.collect { |t| t.id }
     current_item_tax = self.vendor.taxes.find_by_id(self.taxes.keys.first)
@@ -385,7 +385,7 @@ class Item < ActiveRecord::Base
     self.calculate_taxes([next_tax])
     self.order.calculate_totals
   end
-  
+
   def check
     @found = nil
     @tests = {
@@ -396,12 +396,12 @@ class Item < ActiveRecord::Base
                 :tax_items => [],
                 }
     }
-    
+
     self.option_items.existing.each do |oi|
       option_item_result, @found = oi.check
       @tests[self.id][:option_items] << option_item_result if @found
     end
-    
+
     # calculate sums from the serialized tax hash of the item, to be used later
     item_hash_gro_sum = 0
     item_hash_net_sum = 0
@@ -414,7 +414,7 @@ class Item < ActiveRecord::Base
     item_hash_gro_sum = item_hash_gro_sum.round(2)
     item_hash_net_sum = item_hash_net_sum.round(2)
     item_hash_tax_sum = item_hash_tax_sum.round(2)
-    
+
     if self.refunded
       perform_test({
                 :should => 0,
@@ -430,55 +430,55 @@ class Item < ActiveRecord::Base
                 :type => :itemSumCorrect,
                 })
     end
-    
+
     # at this point, self.sum is correct, and can be used in checking TaxItems
-    
+
     self.tax_items.existing.each do |ti|
       tax_item_result, found = ti.check
       @tests[self.id][:tax_items] << tax_item_result if found
     end
-    
+
     # at this point, gro, net and tax of TaxItems are correct, and can be used to validate the hash keys here
-    
+
     perform_test({
               :should => self.tax_items.existing.sum(:tax).round(2),
               :actual => item_hash_tax_sum,
               :msg => "The hashed tax attribute should be the sum of all existing TaxItem tax attributes",
               :type => :itemHashTaxIsSumOfTaxItems,
               })
-    
+
     perform_test({
               :should => self.tax_items.existing.sum(:gro).round(2),
               :actual => item_hash_gro_sum,
               :msg => "The hashed gro attribute should be the sum of all existing TaxItem gro attributes",
               :type => :itemHashGroIsSumOfTaxItems,
               })
-    
+
     perform_test({
               :should => self.tax_items.existing.sum(:net).round(2),
               :actual => item_hash_net_sum,
               :msg => "The hashed net attribute should be the sum of all existing TaxItem net attributes",
               :type => :itemHashNetIsSumOfTaxItems,
               })
-    
+
     perform_test({
               :should => (item_hash_gro_sum - item_hash_net_sum).round(2),
               :actual => item_hash_tax_sum,
               :msg => "The hashed tax attribute should be hashed gro minus hashed net #{ item_hash_gro_sum } - #{ item_hash_net_sum }",
               :type => :itemHashTaxIsHashGroMinusHashNet,
               })
-    
+
     # at this point, the hashed values gro, net and tax are validated with TaxItems, hashed tax is even double checked
-    
+
     # check the cached Item attributes sum and tax_sum with the valid hash sums
-    
+
     perform_test({
               :should => item_hash_tax_sum,
               :actual => self.tax_sum,
               :msg => "The tax_sum attribute should match the hashed tax attribute",
               :type => :itemTaxSumMatchesHashedTax,
               })
-    
+
     if self.vendor.country == 'us'
       # this is redundant testing, because we already know that self.sum is correct. we do it anyway.
       perform_test({
@@ -496,34 +496,34 @@ class Item < ActiveRecord::Base
                 :type => :itemSumMatchesHashedGro,
                 })
     end
-    
+
     perform_test({
           :should => self.tax_items.existing.count,
           :actual => self.taxes.keys.count,
           :msg => "An Item should have the same number of TaxItems as there are keys in the taxes attribute",
           :type => :itemTaxItemsCountCorrect,
           })
-    
+
     perform_test({
           :should => [self.order.id, self.order.cost_center_id, self.order.settlement_id],
           :actual => [self.order_id, self.cost_center_id, self.settlement_id],
           :msg => "An Item should have the same belongs_to attributes as the Order",
           :type => :itemBelongsToCorrect,
           })
-    
+
     perform_test({
           :should => [self.order.hidden, self.order.hidden_at, self.order.hidden_by],
           :actual => [self.hidden, self.hidden_at, self.hidden_by],
           :msg => "An Item should have the same hidden attributes as the Order",
           :type => :itemHiddenCorrect,
           })
-   
+
     puts "\n *** WARNING: Item is deleted, tests are irrelevant! *** \n" if self.hidden
     return @tests, @found
   end
-  
+
   private
-  
+
   def perform_test(options)
     should = options[:should]
     actual = options[:actual]
