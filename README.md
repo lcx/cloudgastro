@@ -1,13 +1,7 @@
-SALOR Hospitality (aka. Bill Gastro)
+CloudGastro - forked from SALOR Hospitality (aka. Bill Gastro)
 ====================================
 
 The modern, enterprise-class Point of Sale (POS) Solution serving the Hospitality Industry: Hotels, Restaurants, Inns, Bars and Shops.
-
-
-Important Notice
-------------------------
-
-This project is no longer actively developed or supported. The last stable tag is `debian/4.1.4.97` in the `wheezy` branch. The `master` branch is a port to a newer Ruby on Rails version in Debian Jessie and is experimental.
 
 
 Development Installation
@@ -21,8 +15,8 @@ You need a few system packages so that native extensions of ruby gems will compi
 
 Any Rails developer will not have any problems running Salor Hospitality, since it is just a plain, standalone Rails 4.1.8 application without any special magic going on.
 
-    git clone git://github.com/michaelfranzl/SalorHospitality.git
-    cd SalorHospitality/salor-hospitality
+    git clone git://github.com/lcx/cloudgastro.git
+    cd cloudgastro
     cd config
     cp database.yml.default database.yml
 
@@ -43,14 +37,14 @@ If you want to re-seed the database do the following:
     rake db:create
     rake db:migrate
     rake db:seed
-    
+
 Or shorter:
 
     rake db:reset
-    
-    
 
-    
+
+
+
 License
 ------------------------
 
