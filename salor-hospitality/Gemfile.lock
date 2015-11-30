@@ -48,6 +48,7 @@ GEM
     capistrano-rails (1.1.5)
       capistrano (~> 3.1)
       capistrano-bundler (~> 1.1)
+    chronic (0.10.2)
     coderay (1.1.0)
     coffee-rails (4.0.1)
       coffee-script (>= 2.2.0)
@@ -195,6 +196,7 @@ DEPENDENCIES
   capistrano
   capistrano-bundler
   capistrano-rails
+  chronic
   coffee-rails (= 4.0.1)
   database_cleaner
   execjs
@@ -223,6 +225,3 @@ DEPENDENCIES
   therubyracer
   uglifier (= 2.5.3)
   web-console (~> 2.0)
-
-BUNDLED WITH
-   1.10.2
